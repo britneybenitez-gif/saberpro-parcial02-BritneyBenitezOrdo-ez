@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Saber PRO · Parcial 02" tests="14" time="0.893">
+  <testsuite name="01 · Validar una pregunta correcta" id="478c74a7-0209-4078-8a88-3a4dc3a58945" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.034">
+    <testcase name="200 · validación exitosa" time="0.034" classname="01ValidarUnaPreguntaCorrecta"/>
+    <testcase name="La pregunta es válida y la lista de errores está vacía" time="0.034" classname="01ValidarUnaPreguntaCorrecta"/>
+  </testsuite>
+  <testsuite name="02 · Crear la pregunta en H2" id="73b6c8b1-3447-4b5a-b814-8fe2df1cb5df" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.234">
+    <testcase name="201 · pregunta creada" time="0.234" classname="02CrearLaPreguntaEnH2"/>
+    <testcase name="El borrador tiene UUID, clave C y cuatro opciones en orden" time="0.234" classname="02CrearLaPreguntaEnH2"/>
+  </testsuite>
+  <testsuite name="03 · Rechazar solo la justificación" id="9ba4eb48-4985-460b-bacf-0a3aa6bb979a" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.027">
+    <testcase name="400 · justificación insuficiente" time="0.027" classname="03RechazarSoloLaJustificacion"/>
+    <testcase name="Se identifica la justificación y no se asigna id" time="0.027" classname="03RechazarSoloLaJustificacion"/>
+  </testsuite>
+  <testsuite name="04 · Obtener los errores estructurales originales" id="9ec5278c-dc33-4e41-ba44-cf0c61a463ff" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.008">
+    <testcase name="400 · errores estructurales del validador" time="0.008" classname="04ObtenerLosErroresEstructuralesOriginales"/>
+    <testcase name="Se informan el número de opciones y la clave inexistente" time="0.008" classname="04ObtenerLosErroresEstructuralesOriginales"/>
+  </testsuite>
+  <testsuite name="05 · Comprobar la propagación del 400" id="67d48fa4-e52b-4e0d-acc2-168525ac9d91" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.029">
+    <testcase name="400 · Question propaga el rechazo" time="0.029" classname="05ComprobarLaPropagacionDel400"/>
+    <testcase name="Los errores y su orden coinciden con Validation" time="0.029" classname="05ComprobarLaPropagacionDel400"/>
+  </testsuite>
+  <testsuite name="06 · Medir la cola antes del envío" id="58f22951-66e0-442e-a25a-48302410a6e7" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.009">
+    <testcase name="200 · cola de revisión disponible" time="0.009" classname="06MedirLaColaAntesDelEnvio"/>
+    <testcase name="Cola durable con el consumidor conectado" time="0.009" classname="06MedirLaColaAntesDelEnvio"/>
+  </testsuite>
+  <testsuite name="07 · Enviar la pregunta a revisión" id="47516fc5-8693-43fd-a46e-772fc07d7631" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.469">
+    <testcase name="202 · envío aceptado" time="0.469" classname="07EnviarLaPreguntaARevision"/>
+    <testcase name="La operación tiene UUID y estado PROCESSING" time="0.469" classname="07EnviarLaPreguntaARevision"/>
+  </testsuite>
+  <testsuite name="08 · Confirmar la operación en Lifecycle" id="c0cb094d-fa11-45e8-afca-dec41bcc989c" timestamp="2026-11-05T19:40:35.575Z" tests="1" failures="0" errors="0" time="0.017">
+    <testcase name="200 · la operación terminó para esta pregunta" time="0.020" classname="08ConfirmarLaOperacionEnLifecycle"/>
+  </testsuite>
+  <testsuite name="09 · Leer la pregunta después de la transición" id="53aafd8f-9dc1-4099-b386-9643b7bdc717" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.038">
+    <testcase name="200 · pregunta recuperada" time="0.038" classname="09LeerLaPreguntaDespuesDeLaTransicion"/>
+    <testcase name="La pregunta conserva sus opciones, clave y justificación y figura en revisión" time="0.038" classname="09LeerLaPreguntaDespuesDeLaTransicion"/>
+  </testsuite>
+  <testsuite name="10 · Verificar entrega y acuse en RabbitMQ" id="b9f090e6-4036-4622-b738-79f4c128301d" timestamp="2026-11-05T19:40:35.575Z" tests="2" failures="0" errors="0" time="0.003">
+    <testcase name="200 · estadísticas de RabbitMQ" time="0.003" classname="10VerificarEntregaYAcuseEnRabbitMq"/>
+    <testcase name="La cola registró una nueva entrega y un nuevo acuse del consumidor" time="0.003" classname="10VerificarEntregaYAcuseEnRabbitMq"/>
+  </testsuite>
+</testsuites>

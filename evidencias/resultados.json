@@ -1,0 +1,269 @@
+{
+  "filas_H2_lifecycle": {
+    "question_lifecycle": 2,
+    "review_operations": 2
+  },
+  "fecha": "2026-11-05 14:41:13 -0500",
+  "herramientas": {
+    "Java": "17",
+    "Spring Boot": "3.5.7",
+    "Newman": "6.2.1",
+    "RabbitMQ": "3.12.1"
+  },
+  "ejecucion_coleccion": {
+    "solicitudes_distintas": 10,
+    "solicitudes_ejecutadas": 14,
+    "aserciones": 22,
+    "aserciones_fallidas": 0,
+    "resultados": [
+      {
+        "caso": "01 · Validar una pregunta correcta",
+        "http": 200,
+        "respuesta": {
+          "valid": true,
+          "errors": []
+        }
+      },
+      {
+        "caso": "02 · Crear la pregunta en H2",
+        "http": 201,
+        "respuesta": {
+          "id": "5c49750b-6c45-4c98-9cc9-b66d8f9e7702",
+          "text": "En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?",
+          "options": [
+            {
+              "id": "A",
+              "text": "15 %"
+            },
+            {
+              "id": "B",
+              "text": "20 %"
+            },
+            {
+              "id": "C",
+              "text": "75 %"
+            },
+            {
+              "id": "D",
+              "text": "80 %"
+            }
+          ],
+          "correctOptionId": "C",
+          "justification": "Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.",
+          "state": "DRAFT"
+        }
+      },
+      {
+        "caso": "03 · Rechazar solo la justificación",
+        "http": 400,
+        "respuesta": {
+          "valid": false,
+          "errors": [
+            "La justificación debe tener al menos 20 caracteres."
+          ]
+        }
+      },
+      {
+        "caso": "04 · Obtener los errores estructurales originales",
+        "http": 400,
+        "respuesta": {
+          "valid": false,
+          "errors": [
+            "Debe haber exactamente 4 opciones.",
+            "La clave correcta debe coincidir con el id de una opción."
+          ]
+        }
+      },
+      {
+        "caso": "05 · Comprobar la propagación del 400",
+        "http": 400,
+        "respuesta": {
+          "valid": false,
+          "errors": [
+            "Debe haber exactamente 4 opciones.",
+            "La clave correcta debe coincidir con el id de una opción."
+          ]
+        }
+      },
+      {
+        "caso": "06 · Medir la cola antes del envío",
+        "http": 200,
+        "respuesta": {
+          "name": "question.submit.review.queue",
+          "consumers": 1,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "deliver_get": 0,
+          "ack": 0
+        }
+      },
+      {
+        "caso": "07 · Enviar la pregunta a revisión",
+        "http": 202,
+        "respuesta": {
+          "operationId": "2c608676-54a7-4f60-80bd-03029f09f44f",
+          "status": "PROCESSING"
+        }
+      },
+      {
+        "caso": "08 · Confirmar la operación en Lifecycle",
+        "http": 404,
+        "respuesta": null
+      },
+      {
+        "caso": "08 · Confirmar la operación en Lifecycle",
+        "http": 200,
+        "respuesta": {
+          "operationId": "2c608676-54a7-4f60-80bd-03029f09f44f",
+          "questionId": "5c49750b-6c45-4c98-9cc9-b66d8f9e7702",
+          "status": "COMPLETED",
+          "state": "PENDING_REVIEW"
+        }
+      },
+      {
+        "caso": "09 · Leer la pregunta después de la transición",
+        "http": 200,
+        "respuesta": {
+          "id": "5c49750b-6c45-4c98-9cc9-b66d8f9e7702",
+          "text": "En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?",
+          "options": [
+            {
+              "id": "A",
+              "text": "15 %"
+            },
+            {
+              "id": "B",
+              "text": "20 %"
+            },
+            {
+              "id": "C",
+              "text": "75 %"
+            },
+            {
+              "id": "D",
+              "text": "80 %"
+            }
+          ],
+          "correctOptionId": "C",
+          "justification": "Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.",
+          "state": "PENDING_REVIEW"
+        }
+      },
+      {
+        "caso": "10 · Verificar entrega y acuse en RabbitMQ",
+        "http": 200,
+        "respuesta": {
+          "name": "question.submit.review.queue",
+          "consumers": 1,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "deliver_get": 0,
+          "ack": 0
+        }
+      },
+      {
+        "caso": "10 · Verificar entrega y acuse en RabbitMQ",
+        "http": 200,
+        "respuesta": {
+          "name": "question.submit.review.queue",
+          "consumers": 1,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "deliver_get": 0,
+          "ack": 0
+        }
+      },
+      {
+        "caso": "10 · Verificar entrega y acuse en RabbitMQ",
+        "http": 200,
+        "respuesta": {
+          "name": "question.submit.review.queue",
+          "consumers": 1,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "deliver_get": 0,
+          "ack": 0
+        }
+      },
+      {
+        "caso": "10 · Verificar entrega y acuse en RabbitMQ",
+        "http": 200,
+        "respuesta": {
+          "name": "question.submit.review.queue",
+          "consumers": 1,
+          "messages_ready": 0,
+          "messages_unacknowledged": 0,
+          "deliver_get": 1,
+          "ack": 1
+        }
+      }
+    ]
+  },
+  "prueba_sin_consumidor": {
+    "questionId": "952b058b-b930-4bfe-b18a-c714a129192c",
+    "aceptacion": {
+      "http": 202,
+      "respuesta": {
+        "operationId": "0506b67c-bf75-444c-9c03-e4cd5dc5f9a9",
+        "status": "PROCESSING"
+      }
+    },
+    "cola_con_lifecycle_detenido": {
+      "name": "question.submit.review.queue",
+      "consumers": 0,
+      "messages_ready": 1,
+      "messages_unacknowledged": 0,
+      "deliver_get": 1,
+      "ack": 1
+    },
+    "respuesta_tras_reinicio_de_lifecycle": {
+      "operationId": "0506b67c-bf75-444c-9c03-e4cd5dc5f9a9",
+      "questionId": "952b058b-b930-4bfe-b18a-c714a129192c",
+      "status": "COMPLETED",
+      "state": "PENDING_REVIEW"
+    },
+    "cola_tras_consumo": {
+      "name": "question.submit.review.queue",
+      "consumers": 1,
+      "messages_ready": 0,
+      "messages_unacknowledged": 0,
+      "deliver_get": 2,
+      "ack": 2
+    }
+  },
+  "persistencia_tras_reiniciar_question": {
+    "filas_H2": {
+      "questions": 2,
+      "answer_options": 8
+    },
+    "pregunta_recuperada": {
+      "id": "952b058b-b930-4bfe-b18a-c714a129192c",
+      "text": "En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?",
+      "options": [
+        {
+          "id": "A",
+          "text": "15 %"
+        },
+        {
+          "id": "B",
+          "text": "20 %"
+        },
+        {
+          "id": "C",
+          "text": "75 %"
+        },
+        {
+          "id": "D",
+          "text": "80 %"
+        }
+      ],
+      "correctOptionId": "C",
+      "justification": "Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.",
+      "state": "PENDING_REVIEW"
+    }
+  },
+  "validation_detenido": {
+    "http": 503,
+    "preguntas_antes_y_despues": 2
+  }
+}

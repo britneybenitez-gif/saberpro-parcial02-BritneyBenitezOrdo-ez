@@ -1,0 +1,482 @@
+{
+  "info": {
+    "_postman_id": "37312237-5ad4-40fc-b1e0-09ca9f53c161",
+    "name": "Saber PRO · Parcial 02",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Ejecuta la colección completa en orden con Run collection. Usa los puertos locales y las credenciales de demostración incluidas en compose.yaml. La colección enlaza questionId y operationId y comprueba la entrega sin retirar mensajes de la cola."
+  },
+  "variable": [
+    {
+      "key": "validationUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "questionUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "lifecycleUrl",
+      "value": "http://localhost:8084",
+      "type": "string"
+    },
+    {
+      "key": "rabbitUrl",
+      "value": "http://localhost:15672",
+      "type": "string"
+    },
+    {
+      "key": "rabbitUser",
+      "value": "saberpro",
+      "type": "string"
+    },
+    {
+      "key": "rabbitPassword",
+      "value": "saberpro_local",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 · Validar una pregunta correcta",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{validationUrl}}/validate",
+        "description": "Validation evalúa la estructura antes del guardado.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?\",\n  \"options\": [\n    {\n      \"id\": \"A\",\n      \"text\": \"15 %\"\n    },\n    {\n      \"id\": \"B\",\n      \"text\": \"20 %\"\n    },\n    {\n      \"id\": \"C\",\n      \"text\": \"75 %\"\n    },\n    {\n      \"id\": \"D\",\n      \"text\": \"80 %\"\n    }\n  ],\n  \"correctOptionId\": \"C\",\n  \"justification\": \"Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "['questionId', 'operationId', 'expectedErrors', 'baseAck', 'baseDeliver', 'opTries', 'queueTries'].forEach(key => pm.collectionVariables.unset(key));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 · validación exitosa\", () => pm.response.to.have.status(200));",
+              "const result = pm.response.json();",
+              "pm.test('La pregunta es válida y la lista de errores está vacía', () => {",
+              "    pm.expect(result).to.deep.equal({valid: true, errors: []});",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Crear la pregunta en H2",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{questionUrl}}/questions",
+        "description": "La creación solo termina después del 200 del validador y de guardar el agregado.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?\",\n  \"options\": [\n    {\n      \"id\": \"A\",\n      \"text\": \"15 %\"\n    },\n    {\n      \"id\": \"B\",\n      \"text\": \"20 %\"\n    },\n    {\n      \"id\": \"C\",\n      \"text\": \"75 %\"\n    },\n    {\n      \"id\": \"D\",\n      \"text\": \"80 %\"\n    }\n  ],\n  \"correctOptionId\": \"C\",\n  \"justification\": \"Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"201 · pregunta creada\", () => pm.response.to.have.status(201));",
+              "const q = pm.response.json();",
+              "pm.test('El borrador tiene UUID, clave C y cuatro opciones en orden', () => {",
+              "    pm.expect(q.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+              "    pm.expect(q.state).to.equal('DRAFT');",
+              "    pm.expect(q.correctOptionId).to.equal('C');",
+              "    pm.expect(q.options.map(o => o.id)).to.deep.equal(['A','B','C','D']);",
+              "    pm.expect(pm.response.headers.get('Location')).to.equal('/questions/' + q.id);",
+              "});",
+              "pm.collectionVariables.set('questionId', q.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Rechazar solo la justificación",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{questionUrl}}/questions",
+        "description": "Se conservan las cuatro opciones y la clave correcta. Únicamente se cambia la justificación a «Porque sí.».",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?\",\n  \"options\": [\n    {\n      \"id\": \"A\",\n      \"text\": \"15 %\"\n    },\n    {\n      \"id\": \"B\",\n      \"text\": \"20 %\"\n    },\n    {\n      \"id\": \"C\",\n      \"text\": \"75 %\"\n    },\n    {\n      \"id\": \"D\",\n      \"text\": \"80 %\"\n    }\n  ],\n  \"correctOptionId\": \"C\",\n  \"justification\": \"Porque sí.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"400 · justificación insuficiente\", () => pm.response.to.have.status(400));",
+              "const result = pm.response.json();",
+              "pm.test('Se identifica la justificación y no se asigna id', () => {",
+              "    pm.expect(result.valid).to.be.false;",
+              "    pm.expect(result).not.to.have.property('id');",
+              "    pm.expect(result.errors).to.have.lengthOf(1);",
+              "    pm.expect(result.errors[0]).to.match(/justificaci[oó]n/i);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Obtener los errores estructurales originales",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{validationUrl}}/validate",
+        "description": "El cuerpo tiene tres opciones y una clave inexistente. Se guarda la lista devuelta por Validation para compararla con la siguiente respuesta.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?\",\n  \"options\": [\n    {\n      \"id\": \"A\",\n      \"text\": \"15 %\"\n    },\n    {\n      \"id\": \"B\",\n      \"text\": \"20 %\"\n    },\n    {\n      \"id\": \"C\",\n      \"text\": \"75 %\"\n    }\n  ],\n  \"correctOptionId\": \"Z\",\n  \"justification\": \"Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"400 · errores estructurales del validador\", () => pm.response.to.have.status(400));",
+              "const r = pm.response.json();",
+              "pm.test('Se informan el número de opciones y la clave inexistente', () => {",
+              "    pm.expect(r.valid).to.be.false;",
+              "    pm.expect(r.errors.join(' ')).to.match(/4 opciones/);",
+              "    pm.expect(r.errors.join(' ')).to.match(/clave/i);",
+              "});",
+              "pm.collectionVariables.set('expectedErrors', JSON.stringify(r.errors));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Comprobar la propagación del 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{questionUrl}}/questions",
+        "description": "Question recibe el mismo cuerpo del caso anterior y debe propagar íntegra la lista de errores.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"En un simulacro, 60 de 80 estudiantes acertaron una pregunta. ¿Qué porcentaje acertó?\",\n  \"options\": [\n    {\n      \"id\": \"A\",\n      \"text\": \"15 %\"\n    },\n    {\n      \"id\": \"B\",\n      \"text\": \"20 %\"\n    },\n    {\n      \"id\": \"C\",\n      \"text\": \"75 %\"\n    }\n  ],\n  \"correctOptionId\": \"Z\",\n  \"justification\": \"Al dividir 60 entre 80 se obtiene 0,75. Multiplicar esa proporción por 100 da 75 %.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"400 · Question propaga el rechazo\", () => pm.response.to.have.status(400));",
+              "const r = pm.response.json();",
+              "pm.test('Los errores y su orden coinciden con Validation', () => {",
+              "    pm.expect(r.valid).to.be.false;",
+              "    pm.expect(r.errors).to.deep.equal(JSON.parse(pm.collectionVariables.get('expectedErrors')));",
+              "    pm.expect(r).not.to.have.property('id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Medir la cola antes del envío",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{rabbitUrl}}/api/queues/%2F/question.submit.review.queue",
+        "description": "La API de administración lee los mismos contadores que el panel de RabbitMQ en el puerto 15672. Se toma una línea base para esta ejecución.",
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{rabbitUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{rabbitPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 · cola de revisión disponible\", () => pm.response.to.have.status(200));",
+              "const q = pm.response.json();",
+              "pm.test('Cola durable con el consumidor conectado', () => {",
+              "    pm.expect(q.name).to.equal('question.submit.review.queue');",
+              "    pm.expect(q.durable).to.be.true;",
+              "    pm.expect(q.consumers).to.be.at.least(1);",
+              "});",
+              "const stats = q.message_stats || {};",
+              "pm.collectionVariables.set('baseAck', stats.ack || 0);",
+              "pm.collectionVariables.set('baseDeliver', stats.deliver_get || 0);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Enviar la pregunta a revisión",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{questionUrl}}/questions/{{questionId}}/submit",
+        "description": "RabbitTemplate publica SubmitQuestionForReview. La respuesta identifica la operación que Lifecycle procesará."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"202 · envío aceptado\", () => pm.response.to.have.status(202));",
+              "const r = pm.response.json();",
+              "pm.test('La operación tiene UUID y estado PROCESSING', () => {",
+              "    pm.expect(r.operationId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+              "    pm.expect(r.status).to.equal('PROCESSING');",
+              "});",
+              "pm.collectionVariables.set('operationId', r.operationId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Confirmar la operación en Lifecycle",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{lifecycleUrl}}/operations/{{operationId}}",
+        "description": "El Runner vuelve a consultar mientras el consumidor termina, con un máximo de 20 reintentos de 0,5 s."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const tries = Number(pm.collectionVariables.get('opTries') || 0);",
+              "if (pm.response.code === 404 && tries < 20) {",
+              "    pm.collectionVariables.set('opTries', tries + 1);",
+              "    pm.execution.setNextRequest(pm.info.requestId);",
+              "    setTimeout(() => {}, 500);",
+              "} else {",
+              "    pm.test('200 · la operación terminó para esta pregunta', () => {",
+              "        pm.response.to.have.status(200);",
+              "        const r = pm.response.json();",
+              "        pm.expect(r.operationId).to.equal(pm.collectionVariables.get('operationId'));",
+              "        pm.expect(r.questionId).to.equal(pm.collectionVariables.get('questionId'));",
+              "        pm.expect(r.status).to.equal('COMPLETED');",
+              "        pm.expect(r.state).to.equal('PENDING_REVIEW');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Leer la pregunta después de la transición",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{questionUrl}}/questions/{{questionId}}",
+        "description": "Question reconstruye el dominio con las opciones de H2 y consulta el estado actual a Lifecycle."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 · pregunta recuperada\", () => pm.response.to.have.status(200));",
+              "const q = pm.response.json();",
+              "pm.test('La pregunta conserva sus opciones, clave y justificación y figura en revisión', () => {",
+              "    pm.expect(q.id).to.equal(pm.collectionVariables.get('questionId'));",
+              "    pm.expect(q.options.map(o => o.text)).to.deep.equal(['15 %','20 %','75 %','80 %']);",
+              "    pm.expect(q.correctOptionId).to.equal('C');",
+              "    pm.expect(q.justification).to.include('0,75');",
+              "    pm.expect(q.state).to.equal('PENDING_REVIEW');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Verificar entrega y acuse en RabbitMQ",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{rabbitUrl}}/api/queues/%2F/question.submit.review.queue",
+        "description": "El Runner espera el siguiente muestreo de RabbitMQ. Verifica que las entregas y los acuses aumentaron frente al caso 06. Permite hasta 30 consultas adicionales separadas por 1 s.",
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "{{rabbitUser}}",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{rabbitPassword}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 · estadísticas de RabbitMQ', () => pm.response.to.have.status(200));",
+              "const q = pm.response.json();",
+              "const stats = q.message_stats || {};",
+              "const baseAck = Number(pm.collectionVariables.get('baseAck'));",
+              "const baseDeliver = Number(pm.collectionVariables.get('baseDeliver'));",
+              "const progressed = (stats.ack || 0) > baseAck && (stats.deliver_get || 0) > baseDeliver;",
+              "const tries = Number(pm.collectionVariables.get('queueTries') || 0);",
+              "if (!progressed && tries < 30) {",
+              "    pm.collectionVariables.set('queueTries', tries + 1);",
+              "    pm.execution.setNextRequest(pm.info.requestId);",
+              "    setTimeout(() => {}, 1000);",
+              "} else {",
+              "    pm.test('La cola registró una nueva entrega y un nuevo acuse del consumidor', () => {",
+              "        pm.expect(stats.deliver_get || 0).to.be.greaterThan(baseDeliver);",
+              "        pm.expect(stats.ack || 0).to.be.greaterThan(baseAck);",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

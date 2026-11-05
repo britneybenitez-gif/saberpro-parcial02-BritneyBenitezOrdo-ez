@@ -1,0 +1,97 @@
+(node:494) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+Saber PRO · Parcial 02
+
+→ 01 · Validar una pregunta correcta
+  POST http://localhost:8082/validate [200 OK, 190B, 34ms]
+  ✓  200 · validación exitosa
+  ✓  La pregunta es válida y la lista de errores está vacía
+
+→ 02 · Crear la pregunta en H2
+  POST http://localhost:8083/questions [201 Created, 624B, 234ms]
+  ✓  201 · pregunta creada
+  ✓  El borrador tiene UUID, clave C y cuatro opciones en orden
+
+→ 03 · Rechazar solo la justificación
+  POST http://localhost:8083/questions [400 Bad Request, 225B, 27ms]
+  ✓  400 · justificación insuficiente
+  ✓  Se identifica la justificación y no se asigna id
+
+→ 04 · Obtener los errores estructurales originales
+  POST http://localhost:8082/validate [400 Bad Request, 268B, 8ms]
+  ✓  400 · errores estructurales del validador
+  ✓  Se informan el número de opciones y la clave inexistente
+
+→ 05 · Comprobar la propagación del 400
+  POST http://localhost:8083/questions [400 Bad Request, 268B, 29ms]
+  ✓  400 · Question propaga el rechazo
+  ✓  Los errores y su orden coinciden con Validation
+
+→ 06 · Medir la cola antes del envío
+  GET http://localhost:15672/api/queues/%2F/question.submit.review.queue [200 OK, 1.13kB, 9ms]
+  ✓  200 · cola de revisión disponible
+  ✓  Cola durable con el consumidor conectado
+
+→ 07 · Enviar la pregunta a revisión
+  POST http://localhost:8083/questions/5c49750b-6c45-4c98-9cc9-b66d8f9e7702/submit [202 Accepted, 246B, 469ms]
+  ✓  202 · envío aceptado
+  ✓  La operación tiene UUID y estado PROCESSING
+
+→ 08 · Confirmar la operación en Lifecycle
+  GET http://localhost:8084/operations/2c608676-54a7-4f60-80bd-03029f09f44f [404 Not Found, 130B, 14ms]
+
+Attempting to set next request to c0cb094d-fa11-45e8-afca-dec41bcc989c
+
+→ 08 · Confirmar la operación en Lifecycle
+  GET http://localhost:8084/operations/2c608676-54a7-4f60-80bd-03029f09f44f [200 OK, 316B, 20ms]
+  ✓  200 · la operación terminó para esta pregunta
+
+→ 09 · Leer la pregunta después de la transición
+  GET http://localhost:8083/questions/5c49750b-6c45-4c98-9cc9-b66d8f9e7702 [200 OK, 569B, 38ms]
+  ✓  200 · pregunta recuperada
+  ✓  La pregunta conserva sus opciones, clave y justificación y figura en revisión
+
+→ 10 · Verificar entrega y acuse en RabbitMQ
+  GET http://localhost:15672/api/queues/%2F/question.submit.review.queue [200 OK, 1.13kB, 3ms]
+  ✓  200 · estadísticas de RabbitMQ
+
+Attempting to set next request to b9f090e6-4036-4622-b738-79f4c128301d
+
+→ 10 · Verificar entrega y acuse en RabbitMQ
+  GET http://localhost:15672/api/queues/%2F/question.submit.review.queue [200 OK, 1.13kB, 2ms]
+  ✓  200 · estadísticas de RabbitMQ
+
+Attempting to set next request to b9f090e6-4036-4622-b738-79f4c128301d
+
+→ 10 · Verificar entrega y acuse en RabbitMQ
+  GET http://localhost:15672/api/queues/%2F/question.submit.review.queue [200 OK, 1.13kB, 3ms]
+  ✓  200 · estadísticas de RabbitMQ
+
+Attempting to set next request to b9f090e6-4036-4622-b738-79f4c128301d
+
+→ 10 · Verificar entrega y acuse en RabbitMQ
+  GET http://localhost:15672/api/queues/%2F/question.submit.review.queue [200 OK, 1.22kB, 3ms]
+  ✓  200 · estadísticas de RabbitMQ
+  ✓  La cola registró una nueva entrega y un nuevo acuse del consumidor
+
+┌─────────────────────────┬───────────────────┬───────────────────┐
+│                         │          executed │            failed │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              iterations │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│                requests │                14 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│            test-scripts │                14 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│      prerequest-scripts │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              assertions │                22 │                 0 │
+├─────────────────────────┴───────────────────┴───────────────────┤
+│ total run duration: 4.6s                                        │
+├─────────────────────────────────────────────────────────────────┤
+│ total data received: 5.58kB (approx)                            │
+├─────────────────────────────────────────────────────────────────┤
+│ average response time: 63ms [min: 2ms, max: 469ms, s.d.: 126ms] │
+└─────────────────────────────────────────────────────────────────┘

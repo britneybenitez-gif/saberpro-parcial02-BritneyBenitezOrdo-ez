@@ -1,0 +1,20 @@
+mvn clean verify
+
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.108 s -- in co.edu.unicauca.saberpro.validation.QuestionValidatorTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.18 s -- in co.edu.unicauca.saberpro.question.QuestionServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.886 s -- in co.edu.unicauca.saberpro.question.QuestionPersistenceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.47 s -- in co.edu.unicauca.saberpro.lifecycle.ReviewCommandListenerTest
+
+[INFO] Reactor Summary for Banco de Preguntas Saber PRO 1.0.0:
+[INFO] 
+[INFO] Banco de Preguntas Saber PRO ....................... SUCCESS [  0.208 s]
+[INFO] shared-contracts ................................... SUCCESS [  1.819 s]
+[INFO] validation-service ................................. SUCCESS [  1.877 s]
+[INFO] question-service ................................... SUCCESS [ 15.832 s]
+[INFO] lifecycle-service .................................. SUCCESS [ 15.651 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  35.793 s
+[INFO] Finished at: 2026-11-05T14:40:20-05:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,68 @@
+name: saberpro-parcial02
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.12.1-management
+    hostname: saberpro-broker
+    environment:
+      RABBITMQ_DEFAULT_USER: saberpro
+      RABBITMQ_DEFAULT_PASS: saberpro_local
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  validation-service:
+    build:
+      context: .
+      args:
+        SERVICE: validation-service
+    environment:
+      JUSTIFICATION_MIN_LENGTH: "${JUSTIFICATION_MIN_LENGTH:-20}"
+    ports:
+      - "127.0.0.1:8082:8082"
+
+  question-service:
+    build:
+      context: .
+      args:
+        SERVICE: question-service
+    environment:
+      VALIDATION_URL: http://validation-service:8082
+      LIFECYCLE_URL: http://lifecycle-service:8084
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "127.0.0.1:8083:8083"
+    volumes:
+      - question-data:/app/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      validation-service:
+        condition: service_started
+
+  lifecycle-service:
+    build:
+      context: .
+      args:
+        SERVICE: lifecycle-service
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "127.0.0.1:8084:8084"
+    volumes:
+      - lifecycle-data:/app/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  rabbit-data:
+  question-data:
+  lifecycle-data:
